@@ -1,0 +1,16 @@
+{
+  "name": "aula_13_08",
+  "version": "1.0.0",
+  "description": "aula do matheus",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon ./app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4"
+  }
+}
