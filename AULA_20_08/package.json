@@ -8,12 +8,12 @@
         "dev": "nodemon app.js"
     },
     "keywords": [],
-    "author": "Thiago",
+    "author": "",
     "license": "ISC",
     "dependencies": {
         "axios": "^1.7.4",
         "body-parser": "^1.20.2",
-        "bootstrap": "^5.3.3",
+        "bootstrap": "^5.3.1",
         "cors": "^2.8.5",
         "ejs": "^3.1.10",
         "express": "^4.19.2",
