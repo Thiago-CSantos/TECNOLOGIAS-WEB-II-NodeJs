@@ -4,6 +4,9 @@ const bodyParser = require("body-parser");
 const connection = require("./database/database");
 const perguntaModel = require("./database/pergunta");
 const pergunta = require("./database/pergunta");
+const respotaModel = require('./database/resposta');
+
+const { where } = require("sequelize");
 // Criando a instância do Express
 const app = express();
 
@@ -28,12 +31,25 @@ app.use(express.static("public"));
 
 app.get("/", (req, res) => {
   // select * from perguntas
-  perguntaModel.findAll({ raw: true }).then((pergunta) => {
-    // console.log(pergunta)
+  perguntaModel.findAll({ raw: true, order: [['id', 'DESC']] }).then((perguntas) => {
+    console.log(pergunta)
     res.render("home", {
-      pergunta: pergunta,
+      perguntas: perguntas,
     });
   });
+});
+
+app.post('/responder', (req, res) => {
+  var corpo = req.body.corpo;
+  var perguntaId = req.body.pergunta
+
+  respotaModel.create({
+    corpo: corpo,
+    perguntaId: perguntaId
+  }).then(() => {
+    res.redirect('/question/' + perguntaId)
+  })
+
 });
 
 app.get("/teste", function (req, res) {
@@ -57,8 +73,22 @@ app.post("/savequestion", (req, res) => {
     });
 });
 
-app.get("/question", function (req, res) {
-  res.render("question");
+app.get("/question:id", function (req, res) {
+  var id = req.params.id;
+
+  perguntaModel.findOne({
+    where: { id: id }
+  })
+    .then(pergunta => {
+      if (pergunta != undefined) {
+        res.render('detalhepergunta', {
+          pergunta: pergunta
+        });
+      }
+      else {
+        res.redirect('/');
+      }
+    })
 });
 
 app.get("/:question", function (req, res) {
