@@ -18,13 +18,17 @@
                     <br>
                     <div class="card">
                         <div class="card-body">
-                            <h4> <%= p.titulo %> </h4>
+                            <h4>
+                                <%= p.titulo %>
+                            </h4>
                         </div>
                         <div class="footer">
-                            <button type="button" class="btn btn-primary">Responder</button>
+                            <a href="/question/<%= p.id %>">
+                                <button type="button" class="btn btn-primary">Responder</button>
+                            </a>
                         </div>
                     </div>
-                  
+
                     <% }) %>
             </div>
             <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
