@@ -40,6 +40,17 @@ app.get("/valida-acesso",(req,res)=>{
     });
 });
 
+app.get("/news",async (req,res)=>{
+    const url = "https://newsapi.org/v2/everything" ;
+    const parametros = "?q=tesla&from=2024-09-12&sortBy=publishedAt&apiKey=20dc8ced659a47a6812110344c77dbc8";
+
+    const response = await fetch(url+ parametros);
+    const json  = await response.json();
+
+    console.log(json);
+
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
