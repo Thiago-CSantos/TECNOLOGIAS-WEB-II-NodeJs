@@ -1,6 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
+import Userdb from '../database/Model/Users';
 import jwt from 'jsonwebtoken';
 import bodyParser from 'body-parser';
+import UserDTO from './DTO/UserDTO';
+import User from './Model/User';
+import ErrorResponse from './Err/ErroResponse';
+import ValidateAccessResponse from './interface/ValidateAccessResponse';
 
 // Configurações
 const app = express();
@@ -8,40 +13,23 @@ const PORT: number | string = process.env.PORT || 3000;
 const SECRET_KEY: string = 'thiago_secreto';
 const API_KEY: string = "20dc8ced659a47a6812110344c77dbc8";
 
-// Tipagem para usuários
-interface ValidateAccessResponse {
-    message: string;
-    id: number;
-    username: string;
-}
-interface ErrorResponse {
-    message: string;
-    ex?: string[];
-    error?: unknown
-}
-interface User {
-    id: number;
-    username: string;
-    password: string;
-}
-
-const users: User[] = [
-    { id: 1, username: 'user1', password: 'password1' },
-    { id: 2, username: 'user2', password: 'password2' }
-];
-
 // Middleware para parsing de JSON
 app.use(bodyParser.json());
 
 // Rota de login
-app.post('/login', (req: Request, res: Response) => {
-    const { username, password } = req.body as { username: string; password: string };
+app.post('/login', async (req: Request, res: Response) => {
+    const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
 
-    const user = users.find(u => u.username === username && u.password === password);
+    const user = await Userdb.findOne({
+        where: {
+            email: emailPost,
+            senha: senhaPost
+        }
+    });
 
     if (user) {
         // Gera um token JWT
-        const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1m' });
+        const token = jwt.sign({ id: user.dataValues.id, email: user.dataValues.email }, SECRET_KEY, { expiresIn: '1d' });
         res.json({ token });
     } else {
         res.status(401).json({ message: 'Invalid credentials' });
@@ -72,9 +60,20 @@ app.get("/valida-acesso", (req: Request, res: Response<ValidateAccessResponse | 
 });
 
 // Rota para buscar notícias
-app.get("/news", async (req: Request, res: Response<ErrorResponse | any>): Promise<void> => {
+app.get("/news", User.validateToken, async (req: Request, res: Response<ErrorResponse | any>): Promise<void> => {
     const url: string = "https://newsapi.org/v2/everything";
     const queryKey = Object.keys(req.query);
+
+    // Parametros
+    // q = Palavras-chave ou frases para pesquisar no título e no corpo do artigo
+    // from = Uma data e hora opcional para o artigo mais antigo permitido. Isso deve estar no formato ISO 8601 (por exemplo, 2024-10-12ou 2024-10-12T01:19:29)
+    // to = Uma data e hora opcional para o artigo mais recente permitido. Isso deve estar no formato ISO 8601 (por exemplo, 2024-10-12ou 2024-10-12T01:19:29)
+    // language = O código ISO-639-1 de 2 letras do idioma para o qual você quer obter manchetes. Opções possíveis: ar de en es fr he it nl no pt
+    // sortBy = A ordem de classificação dos artigos. Opções possíveis: relevancy, popularity, publishedAt.
+    //      relevancy= artigos mais relacionados qvêm primeiro.
+    //      popularity= artigos de fontes e editoras populares vêm primeiro.
+    //      publishedAt= artigos mais recentes vêm primeiro.
+    //      Padrão:publishedAt
 
     // Lista de chaves obrigatórias
     const requiredKeys = ['q', 'from', /*'to',*/ 'language'];
@@ -102,6 +101,26 @@ app.get("/news", async (req: Request, res: Response<ErrorResponse | any>): Promi
     }
 });
 
+
+app.post("/createUser", User.validateDTO(UserDTO), async (req: Request, res: Response) => {
+    try {
+        const { nome, email, senha } = req.body;
+
+        const userDTO: UserDTO = new UserDTO(nome, email, senha);
+        const user: User = new User();
+
+        const newUser: User | ErrorResponse = await user.createUser(userDTO);
+
+        if ('message' in newUser) {
+            res.send(newUser);
+        }
+
+        res.json(newUser)
+
+    } catch (error) {
+        res.status(500).json({ message: `Erro ao crair o ususário `, error })
+    }
+});
 
 // Inicia o servidor
 app.listen(PORT, () => {
