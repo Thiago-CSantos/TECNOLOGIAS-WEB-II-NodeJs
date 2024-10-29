@@ -20,6 +20,10 @@ app.use(bodyParser.json());
 app.post('/login', async (req: Request, res: Response) => {
     const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
 
+    console.log(emailPost);
+    console.log(senhaPost);
+    console.log(req.body);
+
     const user = await Userdb.findOne({
         where: {
             email: emailPost,
@@ -36,6 +40,9 @@ app.post('/login', async (req: Request, res: Response) => {
     }
 });
 
+app.get("/teste", (req: Request, res: Response): void => {
+    res.json({ teste: 'oloko' })
+});
 
 // Rota para validar o token
 app.get("/valida-acesso", (req: Request, res: Response<ValidateAccessResponse | ErrorResponse>): void => {
