@@ -6,6 +6,7 @@ import UserDTO from './DTO/UserDTO';
 import User from './Model/User';
 import ErrorResponse from './Err/ErroResponse';
 import ValidateAccessResponse from './interface/ValidateAccessResponse';
+import bcrypt from 'bcrypt';
 
 // Configurações
 const app = express();
@@ -18,25 +19,34 @@ app.use(bodyParser.json());
 
 // Rota de login
 app.post('/login', async (req: Request, res: Response) => {
-    const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
+    try {
+        const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
 
     console.log(emailPost);
     console.log(senhaPost);
-    console.log(req.body);
 
     const user = await Userdb.findOne({
         where: {
             email: emailPost,
-            senha: senhaPost
         }
     });
 
     if (user) {
+
+        const senhaValida = await bcrypt.compare(senhaPost, user.dataValues.senha);
+
+        if (!senhaValida) {
+            res.status(401).json({ message: 'Invalid credentials' });
+        }
+
         // Gera um token JWT
         const token = jwt.sign({ id: user.dataValues.id, email: user.dataValues.email }, SECRET_KEY, { expiresIn: '1d' });
         res.json({ token });
     } else {
         res.status(401).json({ message: 'Invalid credentials' });
+    }
+    } catch (error) {
+        res.status(401).json({ message: 'Invalid credentials' + error });
     }
 });
 
