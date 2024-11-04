@@ -7,6 +7,8 @@ import User from './Model/User';
 import ErrorResponse from './Err/ErroResponse';
 import ValidateAccessResponse from './interface/ValidateAccessResponse';
 import bcrypt from 'bcrypt';
+import axios from "axios";
+import { format } from "date-fns";
 
 // Configurações
 const app = express();
@@ -19,32 +21,32 @@ app.use(bodyParser.json());
 
 // Rota de login
 app.post('/login', async (req: Request, res: Response) => {
+    const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
     try {
-        const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
 
-    console.log(emailPost);
-    console.log(senhaPost);
+        console.log(emailPost);
+        console.log(senhaPost);
 
-    const user = await Userdb.findOne({
-        where: {
-            email: emailPost,
-        }
-    });
+        const user = await Userdb.findOne({
+            where: {
+                email: emailPost,
+            }
+        });
 
-    if (user) {
+        if (user) {
 
-        const senhaValida = await bcrypt.compare(senhaPost, user.dataValues.senha);
+            const senhaValida = await bcrypt.compare(senhaPost, user.dataValues.senha);
 
-        if (!senhaValida) {
+            if (!senhaValida) {
+                res.status(401).json({ message: 'Invalid credentials' });
+            }
+
+            // Gera um token JWT
+            const token = jwt.sign({ id: user.dataValues.id, email: user.dataValues.email }, SECRET_KEY, { expiresIn: '1d' });
+            res.json({ token });
+        } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
-
-        // Gera um token JWT
-        const token = jwt.sign({ id: user.dataValues.id, email: user.dataValues.email }, SECRET_KEY, { expiresIn: '1d' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ message: 'Invalid credentials' });
-    }
     } catch (error) {
         res.status(401).json({ message: 'Invalid credentials' + error });
     }
@@ -52,6 +54,33 @@ app.post('/login', async (req: Request, res: Response) => {
 
 app.get("/teste", (req: Request, res: Response): void => {
     res.json({ teste: 'oloko' })
+});
+
+app.get("/ibovespa", async (req: Request, res: Response) => {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/^BVSP?region=BR&lang=pt-BR&interval=1d&range=1mo';
+
+    try {
+        const response = await axios.get(url);
+        const data = response.data.chart.result[0];
+
+        const timestamps = data.timestamp;
+        const closes = data.indicators.quote[0].close;
+
+        // Criando uma lista de objetos com data e fechamento
+        const ibovData = timestamps.map((timestamp: number, index: number) => {
+            const date = new Date(timestamp * 1000); // Converte para milissegundos
+            const fechamento = closes[index];
+            return {
+                data: format(date, 'dd-MM-yyyy'),
+                fechamento
+            };
+        });
+
+        res.json({ dados: ibovData });
+    } catch (error) {
+        console.error('Erro ao obter dados do IBOV:', error);
+        res.status(500).json({ erro: 'Erro ao obter dados do IBOV' });
+    }
 });
 
 // Rota para validar o token
