@@ -4,11 +4,14 @@ import jwt from 'jsonwebtoken';
 import bodyParser from 'body-parser';
 import UserDTO from './DTO/UserDTO';
 import User from './Model/User';
+import Favorite from './Model/Favorite';
 import ErrorResponse from './Err/ErroResponse';
+import ErrorResponseStatus from './Err/ErrorResponseStatus';
 import ValidateAccessResponse from './interface/ValidateAccessResponse';
 import bcrypt from 'bcrypt';
 import axios from "axios";
 import { format } from "date-fns";
+import FavoriteDTO from './DTO/FavoriteDTO';
 
 // Configurações
 const app = express();
@@ -58,7 +61,6 @@ app.get("/teste", (req: Request, res: Response): void => {
 
 app.get("/ibovespa", async (req: Request, res: Response) => {
     const url = 'https://query1.finance.yahoo.com/v8/finance/chart/^BVSP?region=BR&lang=pt-BR&interval=1d&range=1mo';
-
     try {
         const response = await axios.get(url);
         const data = response.data.chart.result[0];
@@ -147,7 +149,6 @@ app.get("/news", User.validateToken, async (req: Request, res: Response<ErrorRes
     }
 });
 
-
 app.post("/createUser", User.validateDTO(UserDTO), async (req: Request, res: Response) => {
     try {
         const { nome, email, senha } = req.body;
@@ -165,6 +166,30 @@ app.post("/createUser", User.validateDTO(UserDTO), async (req: Request, res: Res
 
     } catch (error) {
         res.status(500).json({ message: `Erro ao crair o ususário `, error })
+    }
+});
+
+app.post("/favorites", User.validateToken, async (req: Request, res: Response): Promise<void> => {
+    const { id_user, urlNew, urlImage, title } = req.body;
+
+    try {
+
+        const favorite = new Favorite();
+        const f: Favorite | ErrorResponseStatus = await favorite.createFavorite(new FavoriteDTO(id_user, urlNew, urlImage, title));
+
+        if ('status' in f && f.status === 404) {
+            throw new Error(f.message);
+        }
+
+        res.status(201).json({
+            message: "Favorito adicionado com sucesso!",
+            data: f
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Erro ao adicionar favorito",
+            error: error
+        });
     }
 });
 
