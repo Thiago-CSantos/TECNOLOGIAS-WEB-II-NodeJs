@@ -11,6 +11,7 @@ class Database {
         host: "localhost",
         dialect: "postgres",
         port: 5432,
+        logging: false,
       });
     }
     return Database.instance;

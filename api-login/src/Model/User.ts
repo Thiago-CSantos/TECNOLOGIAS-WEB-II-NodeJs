@@ -27,7 +27,6 @@ class User {
     public async createUser(dto: UserDto): Promise<User | ErrorResponse> {
         try {
             const senha = await bcrypt.hash(dto.senha, 10);
-            console.log(senha);
 
             const newUser = await Userdb.create({
                 nome: dto.nome,
@@ -59,7 +58,6 @@ class User {
             try {
                 // Transformando o JSON da requisição no DTO
                 const dto = plainToInstance(dtoClass, req.body);
-                console.log("Middleware validateDTO");
 
                 // Validando o DTO
                 await validateOrReject(dto);

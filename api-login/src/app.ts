@@ -12,6 +12,9 @@ import bcrypt from 'bcrypt';
 import axios from "axios";
 import { format } from "date-fns";
 import FavoriteDTO from './DTO/FavoriteDTO';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from '../swaggerConfig'; 
+
 
 // Configurações
 const app = express();
@@ -22,13 +25,15 @@ const API_KEY: string = "20dc8ced659a47a6812110344c77dbc8";
 // Middleware para parsing de JSON
 app.use(bodyParser.json());
 
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.get('/api-docs', swaggerUi.setup(swaggerSpec));
+
 // Rota de login
 app.post('/login', async (req: Request, res: Response) => {
     const { emailPost, senhaPost } = req.body as { emailPost: string; senhaPost: string };
     try {
-
-        console.log(emailPost);
-        console.log(senhaPost);
 
         const user = await Userdb.findOne({
             where: {
@@ -55,9 +60,6 @@ app.post('/login', async (req: Request, res: Response) => {
     }
 });
 
-app.get("/teste", (req: Request, res: Response): void => {
-    res.json({ teste: 'oloko' })
-});
 
 app.get("/ibovespa", async (req: Request, res: Response) => {
     const url = 'https://query1.finance.yahoo.com/v8/finance/chart/^BVSP?region=BR&lang=pt-BR&interval=1d&range=1mo';
@@ -165,7 +167,7 @@ app.post("/createUser", User.validateDTO(UserDTO), async (req: Request, res: Res
         res.json(newUser)
 
     } catch (error) {
-        res.status(500).json({ message: `Erro ao crair o ususário `, error })
+        res.status(500).json({ message: `Erro ao crir o ususário `, error })
     }
 });
 
@@ -195,4 +197,5 @@ app.post("/favorites", User.validateToken, async (req: Request, res: Response): 
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log(`Documentação disponível em http://localhost:${PORT}/api-docs`);
 });

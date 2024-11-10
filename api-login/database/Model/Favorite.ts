@@ -37,8 +37,11 @@ const Favorite = connection.define("favorite", {
 Users.hasMany(Favorite, {foreignKey: 'id_user'});
 Favorite.belongsTo(Users, {foreignKey: 'id_user'});
 
-Favorite.sync({ force: false }).then(() => {
-    console.log("Tabela 'Favorite' criada ou já existente!");
+Users.sync({ force: false }).then(() => {
+    console.log("Tabela 'Users' criada ou já existente!");
+    Favorite.sync({ force: false }).then(() => {
+        console.log("Tabela 'Favorite' criada ou já existente!");
+    });
 });
 
 export default Favorite;
