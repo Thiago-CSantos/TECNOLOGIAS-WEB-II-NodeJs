@@ -193,7 +193,6 @@ app.post("/favorites", User.validateToken, async (req: Request, res: Response): 
     }
 });
 
-// Inicia o servidor
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
